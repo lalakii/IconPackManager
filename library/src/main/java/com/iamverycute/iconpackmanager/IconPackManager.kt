@@ -25,7 +25,7 @@ import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.IOException
 
-@Suppress("SpellCheckingInspection", "Deprecation")
+@Suppress("SpellCheckingInspection", "Deprecation","Unused")
 open class IconPackManager(private val mContext: Context) {
     private val pm: PackageManager = mContext.packageManager
     private val customRules = hashMapOf<String, String>()
@@ -36,6 +36,7 @@ open class IconPackManager(private val mContext: Context) {
         return this
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     fun isSupportedIconPacks(): HashMap<String?, IconPack> {
         val iconPacks = hashMapOf<String?, IconPack>()
         val resolves = mutableListOf<ResolveInfo>()
@@ -122,12 +123,17 @@ open class IconPackManager(private val mContext: Context) {
             var drawableValue =
                 mPackagesDrawables[pm.getLaunchIntentForPackage(appPackageName)?.component.toString()]
             if (drawableValue == null) {
-                for ((key, value) in mPackagesDrawables) {
+                mPackagesDrawables.forEach {
                     val keywords = getKeywordsForRules(appPackageName)
-                    if (keywords != null && key!!.contains(keywords)) {
-                        if (value != null) drawableValue = value
+                    val componentKey = it.key
+                    if (keywords != null && componentKey != null && componentKey.contains(keywords)) {
+                        if (it.value != null) {
+                            drawableValue = it.value
+                            return@forEach
+                        }
                     }
                 }
+
             }
             if (drawableValue != null) {
                 val id = iconPackRes.getIdentifier(

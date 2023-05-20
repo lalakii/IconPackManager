@@ -40,7 +40,8 @@ class MainActivity : Activity() {
                 ipm.isSupportedIconPacks().forEach {
                     /** If you have more than one icon pack theme installed, you need to exclude it here
                     filter other icon pack**/
-                    if (it.value.name != "your icon pack") return@forEach
+
+                   // if (it.value.name != "Pure Icon Pack") return@run
 
                     //get icon pack name
                     findViewById<TextView>(R.id.iconPackName).text = it.value.name

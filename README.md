@@ -5,7 +5,7 @@
 *Read the icon package resources, unify the size, and crop the original icons if the resources do not contain theme icons*
 
 ## Prerequisites
-+ SDK Version >= 29
++ SDK Version >= 29 (After testing)
 + kotlin
 + install the custom icon pack [Pure Icon Pack](https://www.coolapk.com/apk/me.morirain.dev.iconpack.pure) or Others you like
 
@@ -17,7 +17,7 @@
 
 ```groovy
 dependencies {
-    implementation 'com.iamverylovely:IconPackManager:2.0' //release
+    implementation 'com.iamverylovely:IconPackManager:3.0' //release
 }
 ```
 
