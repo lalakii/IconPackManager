@@ -47,10 +47,14 @@ ipm.addRule("com.android.chrome", "browser")
     <item component="ComponentInfo{com.android.BBKClock/com.android.BBKClock.Timer}" drawable="clock"/>
 </resources>
 ```
-
+*Iterate over this Map(ipm.isSupportedIconPacks()) to get all the icon package names if necessary.*
 ```kotlin
 // load icon pack
 ipm.isSupportedIconPacks().forEach {
+    /** If you have more than one icon pack theme installed, you need to exclude it here
+    filter other icon pack**/
+    if (it.value.name != "your icon pack") return@forEach
+    
     //get icon pack name
     val iconPackName = it.value.name
 

@@ -33,12 +33,17 @@ class MainActivity : Activity() {
             .addRule("com.android.email", "mail")
         val layout = findViewById<ViewGroup>(R.id.custom)
         val layoutRight = findViewById<ViewGroup>(R.id.raw)
+
         apps.forEach { item ->
             run {
-                if(item.flags and ApplicationInfo.FLAG_SYSTEM == ApplicationInfo.FLAG_SYSTEM)return@forEach
+                if (item.flags and ApplicationInfo.FLAG_SYSTEM == ApplicationInfo.FLAG_SYSTEM) return@forEach
                 ipm.isSupportedIconPacks().forEach {
+                    /** If you have more than one icon pack theme installed, you need to exclude it here
+                    filter other icon pack**/
+                    if (it.value.name != "your icon pack") return@forEach
+
                     //get icon pack name
-                    findViewById<TextView>(R.id.iconPackName).text=it.value.name
+                    findViewById<TextView>(R.id.iconPackName).text = it.value.name
                     // Get icon by applicationInfo
                     val icon = it.value.getDrawableIconWithApplicationInfo(item)
 
