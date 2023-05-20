@@ -7,7 +7,7 @@
 ## Prerequisites
 + SDK Version >= 29
 + kotlin
-+ install the custom icon pack
++ install the custom icon pack [Pure Icon Pack](https://www.coolapk.com/apk/me.morirain.dev.iconpack.pure) or Others you like
 
 ## Quick Start
 
