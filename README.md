@@ -53,7 +53,7 @@ ipm.addRule("com.android.chrome", "browser")
 ipm.isSupportedIconPacks().forEach {
     /** If you have more than one icon pack theme installed, you need to exclude it here
     filter other icon pack**/
-    if (it.value.name != "your icon pack") return@forEach
+    // if (it.value.name != "your icon pack") return@forEach
     
     //get icon pack name
     val iconPackName = it.value.name
