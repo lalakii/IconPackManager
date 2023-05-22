@@ -5,7 +5,7 @@
 *Read the icon package resources, unify the size, and crop the original icons if the resources do not contain theme icons*
 
 ## Prerequisites
-+ SDK Version >= 29 (After testing)
++ SDK Version >= 21
 + kotlin
 + install the custom icon pack [Pure Icon Pack](https://www.coolapk.com/apk/me.morirain.dev.iconpack.pure) or Others you like
 
@@ -17,7 +17,7 @@
 
 ```groovy
 dependencies {
-    implementation 'com.iamverylovely:IconPackManager:3.0' //release
+    implementation 'com.iamverylovely:IconPackManager:3.1' //release
 }
 ```
 
@@ -37,7 +37,7 @@ ipm.addRule("com.android.chrome", "browser")
                                                  */
 ```
 ```xml
-<resources> <!--appfilter.xml-->
+<resources> <!-- appfilter.xml, extract [icon pack].apk, see the assets directory -->
     <!-- Get the keyword from the "component" property -->
     <item component="ComponentInfo{cn.nubia.browser/com.android.browser.BrowserLauncher}" drawable="browser"/>
     <item component="ComponentInfo{com.android.browser/com.android.browser.BrowserActivity}" drawable="browser"/>

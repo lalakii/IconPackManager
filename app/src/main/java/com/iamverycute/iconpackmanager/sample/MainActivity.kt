@@ -9,10 +9,11 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.graphics.drawable.toBitmap
 import com.iamverycute.iconpackmanager.IconPackManager
 
 class MainActivity : Activity() {
-    @Suppress("Deprecation")
+    @Suppress("Deprecation", "SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
@@ -32,8 +33,6 @@ class MainActivity : Activity() {
         ipm.addRule("com.android.chrome", "browser")
             .addRule("com.android.email", "mail")
         val layout = findViewById<ViewGroup>(R.id.custom)
-        val layoutRight = findViewById<ViewGroup>(R.id.raw)
-
         apps.forEach { item ->
             run {
                 if (item.flags and ApplicationInfo.FLAG_SYSTEM == ApplicationInfo.FLAG_SYSTEM) return@forEach
@@ -41,36 +40,41 @@ class MainActivity : Activity() {
                     /** If you have more than one icon pack theme installed, you need to exclude it here
                     filter other icon pack**/
 
-                   // if (it.value.name != "Pure Icon Pack") return@run
+                    // if (it.value.name != "Pure Icon Pack") return@run
 
-                    //get icon pack name
-                    findViewById<TextView>(R.id.iconPackName).text = it.value.name
+                    //get icon pack name && icon pack packageName
+                    findViewById<TextView>(R.id.iconPackInfo).text =
+                        it.value.name + "\n" + it.value.packageName
                     // Get icon by applicationInfo
                     val icon = it.value.getDrawableIconWithApplicationInfo(item)
-
                     //create custom layout
                     val customLayout = LinearLayout(this)
-                    customLayout.layout(0, 0, 100, 0)
-                    customLayout.layoutParams = LinearLayout.LayoutParams(120, 120)
+                    customLayout.layout(0, 0, 0, 0)
+                    customLayout.layoutParams =
+                        LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 200)
                     customLayout.orientation = LinearLayout.HORIZONTAL
                     layout.addView(customLayout)
 
-                    //show custom in imageView
-                    val imgView = ImageView(this)
-                    imgView.background = icon
-                    customLayout.addView(imgView)
-
-                    //create raw layout
-                    val rawLayout = LinearLayout(this)
-                    rawLayout.layout(0, 0, 100, 0)
-                    rawLayout.layoutParams = LinearLayout.LayoutParams(220, 220)
-                    rawLayout.orientation = LinearLayout.HORIZONTAL
-                    layoutRight.addView(rawLayout)
-
-                    //show raw icon in imageView
-                    val imgViewRaw = ImageView(this)
-                    imgViewRaw.background = item.loadIcon(packageManager)
-                    rawLayout.addView(imgViewRaw)
+                    //custom icon and default icon
+                    var defaultIcon = getDrawable(android.R.drawable.sym_def_app_icon)
+                    try {
+                        defaultIcon = packageManager.getApplicationIcon(item.packageName)
+                    } catch (_: PackageManager.NameNotFoundException) {
+                    }
+                    val drawables =
+                        mutableListOf(icon, defaultIcon)
+                    drawables.forEach { drawable ->
+                        //show icon in imageView
+                        val imgView = ImageView(this)
+                        imgView.setImageBitmap(drawable?.toBitmap())
+                        imgView.scaleType = ImageView.ScaleType.FIT_CENTER
+                        imgView.adjustViewBounds = true
+                        val imageViewLayout =
+                            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1F)
+                        imageViewLayout.topMargin = 10
+                        imgView.layoutParams = imageViewLayout
+                        customLayout.addView(imgView)
+                    }
                 }
             }
         }

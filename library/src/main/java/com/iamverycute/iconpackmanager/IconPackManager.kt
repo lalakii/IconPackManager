@@ -1,12 +1,9 @@
 package com.iamverycute.iconpackmanager
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -25,89 +22,81 @@ import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.IOException
 
-@Suppress("SpellCheckingInspection", "Deprecation","Unused")
+@Suppress("SpellCheckingInspection", "Deprecation", "DiscouragedApi")
 open class IconPackManager(private val mContext: Context) {
+    private val flag = PackageManager.GET_META_DATA
     private val pm: PackageManager = mContext.packageManager
     private val customRules = hashMapOf<String, String>()
     private val themes = mutableListOf("org.adw.launcher.THEMES", "com.gau.go.launcherex.theme")
+    private var iconPacks: HashMap<String?, IconPack>? = null
 
     fun addRule(key: String, value: String): IconPackManager {
         customRules[key] = value
         return this
     }
 
-    @SuppressLint("ObsoleteSdkInt")
     fun isSupportedIconPacks(): HashMap<String?, IconPack> {
-        val iconPacks = hashMapOf<String?, IconPack>()
-        val resolves = mutableListOf<ResolveInfo>()
-        themes.forEach {
-            val intent = Intent(it)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                resolves.addAll(
-                    pm.queryIntentActivities(
-                        intent,
-                        PackageManager.ResolveInfoFlags.of(PackageManager.GET_META_DATA.toLong())
-                    )
-                )
-            } else {
-                resolves.addAll(
-                    pm.queryIntentActivities(
-                        intent,
-                        PackageManager.GET_META_DATA
-                    )
-                )
-            }
-        }
-        resolves.forEach {
-            val ip = IconPack()
-            ip.packageName = it.activityInfo.packageName
-            try {
-                val ai: ApplicationInfo =
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        pm.getApplicationInfo(
-                            ip.packageName!!, PackageManager.ApplicationInfoFlags.of(
-                                PackageManager.GET_META_DATA.toLong()
-                            )
-                        )
-                    } else {
-                        pm.getApplicationInfo(
-                            ip.packageName!!, PackageManager.GET_META_DATA
-                        )
-                    }
-                ip.name = pm.getApplicationLabel(ai).toString()
-                iconPacks[ip.packageName] = ip
-            } catch (_: PackageManager.NameNotFoundException) {
-            }
-        }
-        return iconPacks
+        return isSupportedIconPacks(false)
     }
 
-    inner class IconPack {
-        var packageName: String? = null
-        var name: String? = null
-        private var mLoaded = false
-        private val mPackagesDrawables = hashMapOf<String?, String?>()
-        private lateinit var iconPackRes: Resources
-
-        private fun load() {
-            try {
-                iconPackRes = pm.getResourcesForApplication(packageName!!)
-                iconPackRes.assets?.open("appfilter.xml").run {
-                    val xpp = XmlPullParserFactory.newInstance().newPullParser()
-                    xpp.setInput(this?.reader())
-                    var eventType = xpp.eventType
-                    while (eventType != XmlPullParser.END_DOCUMENT) {
-                        if (eventType == XmlPullParser.START_TAG) {
-                            if (xpp.name == "item") {
-                                val componentValue = xpp.getAttributeValue(null, "component")
-                                val drawableValue = xpp.getAttributeValue(null, "drawable")
-                                if (!mPackagesDrawables.containsKey(componentValue))
-                                    mPackagesDrawables[componentValue] = drawableValue
-                            }
-                        }
-                        eventType = xpp.next()
+    open fun isSupportedIconPacks(reload: Boolean): HashMap<String?, IconPack> {
+        if (iconPacks == null || reload) {
+            iconPacks = hashMapOf()
+            themes.forEach {
+                val intent = Intent(it)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    pm.queryIntentActivities(
+                        intent,
+                        PackageManager.ResolveInfoFlags.of(flag.toLong())
+                    )
+                } else {
+                    pm.queryIntentActivities(intent, flag)
+                }.forEach { info ->
+                    val iconPackPackageName = info.activityInfo.packageName
+                    try {
+                        iconPacks!![iconPackPackageName] = IconPack(
+                            iconPackPackageName, pm.getApplicationLabel(
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    pm.getApplicationInfo(
+                                        iconPackPackageName, PackageManager.ApplicationInfoFlags.of(
+                                            flag.toLong()
+                                        )
+                                    )
+                                } else {
+                                    pm.getApplicationInfo(iconPackPackageName, flag)
+                                }
+                            ).toString()
+                        )
+                    } catch (_: PackageManager.NameNotFoundException) {
                     }
-                    mLoaded = true
+                }
+            }
+        }
+        return iconPacks!!
+    }
+
+    inner class IconPack(val packageName: String, val name: String) {
+        private val mPackagesDrawables = hashMapOf<String?, String?>()
+        private val iconPackRes = pm.getResourcesForApplication(packageName)
+
+        init {
+            try {
+                iconPackRes.assets.open("appfilter.xml").use {
+                    XmlPullParserFactory.newInstance().newPullParser().run {
+                        setInput(it.reader())
+                        var eventType = eventType
+                        while (eventType != XmlPullParser.END_DOCUMENT) {
+                            if (eventType == XmlPullParser.START_TAG) {
+                                if (name == "item") {
+                                    val componentValue = getAttributeValue(null, "component")
+                                    val drawableValue = getAttributeValue(null, "drawable")
+                                    if (!mPackagesDrawables.containsKey(componentValue))
+                                        mPackagesDrawables[componentValue] = drawableValue
+                                }
+                            }
+                            eventType = next()
+                        }
+                    }
                 }
             } catch (_: XmlPullParserException) {
                 Log.d(TAG, "Cannot parse icon pack appfilter.xml")
@@ -115,7 +104,6 @@ open class IconPackManager(private val mContext: Context) {
             }
         }
 
-        @SuppressLint("UseCompatLoadingForDrawables", "DiscouragedApi")
         private fun findDrawable(
             appPackageName: String,
             defaultDrawable: Drawable?
@@ -126,7 +114,7 @@ open class IconPackManager(private val mContext: Context) {
                 mPackagesDrawables.forEach {
                     val keywords = getKeywordsForRules(appPackageName)
                     val componentKey = it.key
-                    if (keywords != null && componentKey != null && componentKey.contains(keywords)) {
+                    if (componentKey != null && keywords != null && componentKey.contains(keywords)) {
                         if (it.value != null) {
                             drawableValue = it.value
                             return@forEach
@@ -154,13 +142,10 @@ open class IconPackManager(private val mContext: Context) {
         }
 
         fun getDrawableIconWithApplicationInfo(
-            info: ApplicationInfo?
+            info: ApplicationInfo
         ): Drawable {
-            if (!mLoaded) {
-                load()
-            }
             return findDrawable(
-                info?.packageName!!,
+                info.packageName,
                 info.loadIcon(pm)
             )
         }
