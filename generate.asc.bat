@@ -6,7 +6,7 @@ set aar_file="com.iamverycute.iconpackmanager-release.aar"
 set aar_path=%aar_dir:"=%%aar_file:"=%
 if exist %aar_dir% (
 	echo "Generate ASC"
-	gpg --armor --detach-sign IconPackManager-3.1.pom
+	gpg --armor --detach-sign IconPackManager-3.2.pom
       gpg --armor --detach-sign %aar_path%
 ) else (
 	echo "file not found!"

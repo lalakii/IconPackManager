@@ -15,29 +15,28 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
+import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
-import org.xmlpull.v1.XmlPullParserFactory
 import java.io.IOException
 
-@Suppress("SpellCheckingInspection", "Deprecation", "DiscouragedApi")
-open class IconPackManager(private val mContext: Context) {
-    private val flag = PackageManager.GET_META_DATA
+@Suppress("SpellCheckingInspection", "Deprecation", "DiscouragedApi","Unused")
+open class IconPackManager(mContext: Context) {
+    private val contextRes = mContext.resources
     private val pm: PackageManager = mContext.packageManager
+    private val flag = PackageManager.GET_META_DATA
     private val customRules = hashMapOf<String, String>()
     private val themes = mutableListOf("org.adw.launcher.THEMES", "com.gau.go.launcherex.theme")
     private var iconPacks: HashMap<String?, IconPack>? = null
 
-    fun addRule(key: String, value: String): IconPackManager {
+    open fun addRule(key: String, value: String): IconPackManager {
         customRules[key] = value
         return this
     }
 
-    fun isSupportedIconPacks(): HashMap<String?, IconPack> {
-        return isSupportedIconPacks(false)
-    }
+    open fun isSupportedIconPacks() = isSupportedIconPacks(false)
 
     open fun isSupportedIconPacks(reload: Boolean): HashMap<String?, IconPack> {
         if (iconPacks == null || reload) {
@@ -46,8 +45,7 @@ open class IconPackManager(private val mContext: Context) {
                 val intent = Intent(it)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     pm.queryIntentActivities(
-                        intent,
-                        PackageManager.ResolveInfoFlags.of(flag.toLong())
+                        intent, PackageManager.ResolveInfoFlags.of(flag.toLong())
                     )
                 } else {
                     pm.queryIntentActivities(intent, flag)
@@ -75,23 +73,26 @@ open class IconPackManager(private val mContext: Context) {
         return iconPacks!!
     }
 
-    inner class IconPack(val packageName: String, val name: String) {
-        private val mPackagesDrawables = hashMapOf<String?, String?>()
+    inner class IconPack(private val packageName: String, val name: String) {
+        private val mComponentDrawables = hashMapOf<String?, String?>()
         private val iconPackRes = pm.getResourcesForApplication(packageName)
+
+        fun getPackageName(): String {
+            return packageName
+        }
 
         init {
             try {
                 iconPackRes.assets.open("appfilter.xml").use {
-                    XmlPullParserFactory.newInstance().newPullParser().run {
+                    Xml.newPullParser().run {
                         setInput(it.reader())
                         var eventType = eventType
                         while (eventType != XmlPullParser.END_DOCUMENT) {
                             if (eventType == XmlPullParser.START_TAG) {
                                 if (name == "item") {
                                     val componentValue = getAttributeValue(null, "component")
-                                    val drawableValue = getAttributeValue(null, "drawable")
-                                    if (!mPackagesDrawables.containsKey(componentValue))
-                                        mPackagesDrawables[componentValue] = drawableValue
+                                    if (!mComponentDrawables.containsKey(componentValue)) mComponentDrawables[componentValue] =
+                                        getAttributeValue(null, "drawable")
                                 }
                             }
                             eventType = next()
@@ -104,62 +105,42 @@ open class IconPackManager(private val mContext: Context) {
             }
         }
 
-        private fun findDrawable(
-            appPackageName: String,
-            defaultDrawable: Drawable?
-        ): Drawable {
+        private fun getDrawable(appPackageName: String, defaultDrawable: Drawable?): Drawable {
             var drawableValue =
-                mPackagesDrawables[pm.getLaunchIntentForPackage(appPackageName)?.component.toString()]
-            if (drawableValue == null) {
-                mPackagesDrawables.forEach {
-                    val keywords = getKeywordsForRules(appPackageName)
-                    val componentKey = it.key
-                    if (componentKey != null && keywords != null && componentKey.contains(keywords)) {
-                        if (it.value != null) {
+                mComponentDrawables[pm.getLaunchIntentForPackage(appPackageName)?.component.toString()]
+            if (!drawableValue.isNullOrEmpty()) {
+                val keywords = getKeywordsForRules(appPackageName)
+                if (keywords != null) {
+                    mComponentDrawables.forEach {
+                        if (it.key?.contains(keywords) == true) {
                             drawableValue = it.value
                             return@forEach
                         }
                     }
                 }
-
             }
-            if (drawableValue != null) {
+            if (!drawableValue.isNullOrEmpty()) {
                 val id = iconPackRes.getIdentifier(
-                    drawableValue,
-                    "drawable",
-                    packageName
-                )//load icon from pack
-                if (id > 0) return iconPackRes.getDrawable(id, null)
-            }
-            if (defaultDrawable != null)
-                return bitmapCutCircle(
-                    defaultDrawable.toBitmap() //default icon cut circle
+                    drawableValue, "drawable", packageName
                 )
-            return mContext.resources.getDrawable(
-                android.R.drawable.sym_def_app_icon,
-                null
-            ) //sys default icon
+                if (id > 0) return iconPackRes.getDrawable(id, null)//load icon from pack
+            }
+            return if (defaultDrawable != null) bitmapCutCircle(defaultDrawable.toBitmap())//app default icon cut circle
+            else contextRes.getDrawable(
+                android.R.drawable.sym_def_app_icon, null
+            )//sys default icon
         }
 
-        fun getDrawableIconWithApplicationInfo(
-            info: ApplicationInfo
-        ): Drawable {
-            return findDrawable(
-                info.packageName,
-                info.loadIcon(pm)
-            )
-        }
+        fun loadIcon(info: ApplicationInfo) = getDrawable(info.packageName, info.loadIcon(pm))
 
         private fun bitmapCutCircle(icon: Bitmap): BitmapDrawable {
             val bmp = Bitmap.createBitmap(
-                icon.width,
-                icon.height, Bitmap.Config.ARGB_8888
+                icon.width, icon.height, Bitmap.Config.ARGB_8888
             )
             val canvas = Canvas(bmp)
             val paint = Paint()
             val rect = Rect(
-                0, 0, icon.width,
-                icon.height
+                0, 0, icon.width, icon.height
             )
             paint.isAntiAlias = true
             paint.isFilterBitmap = true
@@ -167,10 +148,7 @@ open class IconPackManager(private val mContext: Context) {
             canvas.drawARGB(0, 0, 0, 0)
             paint.color = Color.BLACK
             canvas.drawCircle(
-                icon.width / 2 + 0.7f,
-                icon.height / 2 + 0.7f,
-                icon.width / 2 + 0.1f,
-                paint
+                icon.width / 2 + 0.7f, icon.height / 2 + 0.7f, icon.width / 2 + 0.1f, paint
             )
             paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
             canvas.drawBitmap(icon, rect, rect, paint)
@@ -178,18 +156,14 @@ open class IconPackManager(private val mContext: Context) {
             paint.strokeWidth = 24f
             paint.color = Color.TRANSPARENT
             canvas.drawCircle(
-                icon.width / 2 + 1f,
-                icon.height / 2 + 1f,
-                icon.width / 2 + 1f,
-                paint
+                icon.width / 2 + 1f, icon.height / 2 + 1f, icon.width / 2 + 1f, paint
             )
-            return bmp.toDrawable(mContext.resources)
+            return bmp.toDrawable(contextRes)
         }
 
         private fun getKeywordsForRules(appPackageName: String): String? {
             customRules.forEach {
-                if (appPackageName.contains(it.key))
-                    return it.value
+                if (appPackageName.contains(it.key)) return it.value
             }
             return null
         }
