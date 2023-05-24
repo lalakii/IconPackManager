@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.iamverycute.iconpackmanager.sample'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.iamverycute.iconpackmanager.sample"
+        minSdk 21
+        targetSdk 33
+        versionCode 3
+        versionName "3.3"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_19
+        targetCompatibility JavaVersion.VERSION_19
+    }
+    kotlinOptions {
+        jvmTarget = 19
+    }
+    buildToolsVersion '34.0.0 rc4'
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation project(path: ':library')
+}
