@@ -18,7 +18,7 @@
 
 ```groovy
 dependencies {
-    implementation 'com.iamverylovely:IconPackManager:3.3' //release
+    implementation 'com.iamverylovely:IconPackManager:3.5' //release
 }
 ```
 
@@ -60,7 +60,11 @@ ipm.isSupportedIconPacks().forEach {
     val iconPackName = it.value.name
 
     //get icon from icon pack
-    val icon = it.value.loadIcon(applicationInfo)              
+    val icon = it.value.loadIcon(applicationInfo)       
+    
+    //if not found icon
+    if(icon == null)
+        it.value.iconCutCircle(item.loadIcon(packageManager).toBitmap(),scaleF)
 }
 ```
 

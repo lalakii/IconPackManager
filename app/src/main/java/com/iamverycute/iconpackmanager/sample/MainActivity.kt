@@ -2,7 +2,9 @@ package com.iamverycute.iconpackmanager.sample
 
 import android.app.Activity
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PackageInfoFlags
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -21,7 +23,7 @@ class MainActivity : Activity(), AdapterView.OnItemSelectedListener {
     private lateinit var apps: MutableList<ApplicationInfo>
     private val iconPacks = mutableListOf<String>()
 
-    @Suppress("Deprecation", "SetTextI18n", "QueryPermissionsNeeded")
+    @Suppress("SetTextI18n", "QueryPermissionsNeeded")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
@@ -42,6 +44,7 @@ class MainActivity : Activity(), AdapterView.OnItemSelectedListener {
             .addRule("com.android.email", "mail")
             .addRule("zte", "appstore")
             .addRule("updater", "update")
+            .addRule("file", "filemanager")
         layout = findViewById(R.id.custom)
         val spinner = findViewById<Spinner>(R.id.iconPacks)
         loadIcons()
@@ -53,7 +56,7 @@ class MainActivity : Activity(), AdapterView.OnItemSelectedListener {
         layout.removeAllViews()
         apps.forEach { item ->
             run {
-                if (item.flags and ApplicationInfo.FLAG_SYSTEM == ApplicationInfo.FLAG_SYSTEM) return@forEach
+                if (packageManager.getLaunchIntentForPackage(item.packageName) == null) return@forEach
                 ipm.isSupportedIconPacks().forEach {
                     //get icon pack name, icon pack packageName: it.value.getPackageName()
                     val iconPackName = it.value.name
@@ -65,7 +68,7 @@ class MainActivity : Activity(), AdapterView.OnItemSelectedListener {
                     filter other icon pack**/
                     if (iconPacks.size != 0 && iconPacks[0] == it.value.name) {
                         // Get icon by applicationInfo
-                        val icon = it.value.loadIcon(item)
+                        val iconInfo = it.value.loadIcon(item)
                         //create custom layout
                         val customLayout = LinearLayout(this)
                         customLayout.layout(0, 0, 0, 0)
@@ -80,8 +83,11 @@ class MainActivity : Activity(), AdapterView.OnItemSelectedListener {
                             defaultIcon = packageManager.getApplicationIcon(item.packageName)
                         } catch (_: PackageManager.NameNotFoundException) {
                         }
-                        val drawables =
-                            mutableListOf(icon, defaultIcon)
+                        var icon = iconInfo
+                        if (icon == null) {
+                            icon = it.value.iconCutCircle(item.loadIcon(packageManager).toBitmap())
+                        }
+                        val drawables = mutableListOf(icon, defaultIcon)
                         drawables.forEach { drawable ->
                             //show icon in imageView
                             val imgView = ImageView(this)

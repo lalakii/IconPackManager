@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.iamverycute.iconpackmanager.sample'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.iamverycute.iconpackmanager.sample"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 3
         versionName "3.3"
     }
@@ -28,7 +28,7 @@ android {
     kotlinOptions {
         jvmTarget = 19
     }
-    buildToolsVersion '34.0.0 rc4'
+    buildToolsVersion '34.0.0'
 }
 
 dependencies {
