@@ -1,5 +1,5 @@
 # IconPackManager
-[![Maven Central](https://img.shields.io/maven-central/v/com.iamverylovely/IconPackManager.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.iamverylovely/IconPackManager/) ![API: 19-33 (shields.io)](https://img.shields.io/badge/API-21+-green) ![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/license-Apache--2.0-brightgreen)
+[![Maven Central](https://img.shields.io/maven-central/v/com.iamverylovely/IconPackManager.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.iamverylovely/IconPackManager/) ![API: 21+ (shields.io)](https://img.shields.io/badge/API-21+-green) ![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/license-Apache--2.0-brightgreen)
 
 **Quick load icon pack.**
 
@@ -64,7 +64,7 @@ ipm.isSupportedIconPacks().forEach {
     
     //if not found icon
     if(icon == null)
-        it.value.iconCutCircle(item.loadIcon(packageManager).toBitmap(),scaleF)
+        it.value.iconCutCircle(applicationInfo.loadIcon(packageManager).toBitmap(),scaleF)
 }
 ```
 
