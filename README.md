@@ -20,7 +20,7 @@
 
 ```groovy
 dependencies {
-    implementation 'com.iamverycute:IconPackManager:4.0' //release
+    implementation 'com.iamverycute:IconPackManager:4.1' //release
 }
 ```
 
