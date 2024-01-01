@@ -8,13 +8,13 @@ android {
     compileSdk 34
 
     defaultConfig {
-        versionCode 3
-        versionName "3.5"
+        versionCode 4
+        versionName "4.0"
         minSdk 21
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
         }
     }
     compileOptions {
@@ -24,10 +24,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-    buildToolsVersion '34.0.0'
     project.archivesBaseName = "com.iamverycute.iconpackmanager"
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
 }

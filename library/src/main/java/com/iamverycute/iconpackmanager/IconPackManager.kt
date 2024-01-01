@@ -19,16 +19,17 @@ import androidx.core.graphics.drawable.toDrawable
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
+
 @Suppress("SpellCheckingInspection", "DiscouragedApi", "Unused")
 open class IconPackManager(mContext: Context) {
     private val contextRes = mContext.resources
     private val pm: PackageManager = mContext.packageManager
     private val flag = PackageManager.GET_META_DATA
-    private val customRules = hashMapOf<String, String>()
+    private val customRules = hashMapOf<String, Array<out String>>()
     private val themes = mutableListOf("org.adw.launcher.THEMES", "com.gau.go.launcherex.theme")
     private var iconPacks: HashMap<String?, IconPack>? = null
 
-    open fun addRule(key: String, value: String): IconPackManager {
+    open fun addRule(key: String, vararg value: String): IconPackManager {
         customRules[key] = value
         return this
     }
@@ -42,7 +43,7 @@ open class IconPackManager(mContext: Context) {
             iconPacks = hashMapOf()
             themes.forEach {
                 val intent = Intent(it)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
                     pm.queryIntentActivities(
                         intent, PackageManager.ResolveInfoFlags.of(flag.toLong())
                     )
@@ -65,7 +66,7 @@ open class IconPackManager(mContext: Context) {
     }
 
     private fun getApplicationInfo(iconPackPackageName: String): ApplicationInfo {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
             pm.getApplicationInfo(
                 iconPackPackageName,
                 PackageManager.ApplicationInfoFlags.of(flag.toLong())
@@ -107,44 +108,57 @@ open class IconPackManager(mContext: Context) {
             var drawableValue =
                 mComponentDrawables[pm.getLaunchIntentForPackage(appPackageName)?.component.toString()]
             if (drawableValue.isNullOrEmpty()) {
-                val keywords = getKeywordsForRules(appPackageName)
-                if (keywords != null) {
-                    mComponentDrawables.filter {
-                        it.key?.contains(keywords) == true
-                    }.firstNotNullOfOrNull {
-                        drawableValue = it.value
+                getKeywordsForRules(appPackageName)?.forEach { word ->
+                    run {
+                        mComponentDrawables.filterKeys {
+                            it?.contains(word) == true
+                        }.firstNotNullOfOrNull {
+                            drawableValue = it.value
+                        }
                     }
                 }
             }
             if (!drawableValue.isNullOrEmpty()) {
                 val id = iconPackRes.getIdentifier(drawableValue, "drawable", packageName)
-                if (id > 0) return iconPackRes.getDrawable(id, null) //load icon from pack
+                if (id > 0) return iconPackRes.getDrawable(id, null)
             }
             return null
         }
 
         fun loadIcon(info: ApplicationInfo) = getDrawable(info.packageName)
 
-        fun iconCutCircle(icon: Bitmap) = iconCutCircle(icon, 0.9f)
+        fun iconCutCircle(icon: Bitmap, side: Int, scale: Float) =
+            iconCut(icon, side, side * 0.5f, scale)
 
-        fun iconCutCircle(icon: Bitmap, scale: Float): BitmapDrawable {
-            val side = icon.width / 2f
+        @Suppress("MemberVisibilityCanBePrivate")
+        fun iconCut(raw: Bitmap, side: Int, radius: Float, scale: Float): BitmapDrawable {
+            val icon = Bitmap.createScaledBitmap(raw, side, side, true)
             val bmp = Bitmap.createBitmap(icon.width, icon.height, Bitmap.Config.ARGB_8888)
             val paint = Paint()
             paint.isDither = true
             paint.isAntiAlias = true
             paint.isFilterBitmap = true
             val canvas = Canvas(bmp)
-            canvas.scale(scale, scale, canvas.width / 2.toFloat(), canvas.height / 2.toFloat())
+            val halfWidth = canvas.width * 0.5f
+            val most = halfWidth.coerceAtMost(radius)
+            canvas.scale(scale, scale, halfWidth, halfWidth)
             canvas.drawARGB(0, 0, 0, 0)
-            canvas.drawCircle(side, side, side, paint)
+            canvas.drawRoundRect(
+                0f,
+                0f,
+                canvas.width.toFloat(),
+                canvas.height.toFloat(),
+                most,
+                most,
+                paint
+            )
             paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
             val rect = Rect(0, 0, bmp.width, bmp.height)
             canvas.drawBitmap(icon, rect, rect, paint)
             return bmp.toDrawable(contextRes)
         }
 
-        private fun getKeywordsForRules(appPackageName: String): String? {
+        private fun getKeywordsForRules(appPackageName: String): Array<out String>? {
             customRules.forEach { if (appPackageName.contains(it.key)) return it.value }
             return null
         }

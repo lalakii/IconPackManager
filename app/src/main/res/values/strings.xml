@@ -1,5 +1,0 @@
-<resources>
-    <string name="app_name">IconPackManagerSample</string>
-    <string name="raw_icon">This is the default icon</string>
-    <string name="icon_info">Custom icon pack not found</string>
-</resources>
