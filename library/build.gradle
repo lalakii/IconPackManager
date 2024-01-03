@@ -1,0 +1,28 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.iamverycute.iconpackmanager'
+    compileSdk 34
+
+    defaultConfig {
+        versionCode 4
+        versionName "4.3"
+        minSdk 17
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = 11
+    }
+    project.archivesBaseName = "com.iamverycute.iconpackmanager"
+}
