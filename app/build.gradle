@@ -1,0 +1,70 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+android {
+    namespace 'cn.lalaki.tinydesk'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "cn.lalaki.tinydesk"
+        minSdk 14
+        targetSdk 34
+        versionCode 3
+        versionName "3"
+    }
+
+    signingConfigs {
+        disableV1sign {
+            v1SigningEnabled true
+            v2SigningEnabled true
+            enableV3Signing true
+            enableV4Signing true
+            keyAlias "dazen@189.cn"
+            storeFile file("D:\\imoe.jks")
+            storePassword "${System.getenv("mystorepass")}"
+            keyPassword "${System.getenv("mystorepass2")}"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            jniDebuggable false
+            renderscriptDebuggable false
+            proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
+            proguardFile 'proguard-rules.pro'
+            signingConfig signingConfigs.disableV1sign
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_20
+        targetCompatibility JavaVersion.VERSION_20
+    }
+    kotlinOptions {
+        jvmTarget = 20
+    }
+    packagingOptions {
+        exclude "META-INF/**"
+        exclude "kotlin/**"
+        exclude "DebugProbesKt.bin"
+        exclude "app-release"
+        exclude "kotlin-tooling-metadata.json"
+    }
+}
+
+dependencies {
+    implementation project(path: ':library')
+}
+
+tasks.configureEach {
+    if (it.name == "packageRelease") {
+        it.doFirst {
+            def metaFile = file("${project.layout.buildDirectory.get()}\\intermediates\\app_metadata\\release\\app-metadata.properties")
+            metaFile.delete()
+            metaFile.createNewFile()
+        }
+    }
+}
