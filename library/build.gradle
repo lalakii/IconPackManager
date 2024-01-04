@@ -28,6 +28,12 @@ android {
 }
 
 tasks.configureEach {
+    if (it.name == "writeReleaseAarMetadata") {
+        it.doLast {
+            def metaFile = file("${project.layout.buildDirectory.get()}\\intermediates\\aar_metadata\\release\\aar-metadata.properties")
+            metaFile.delete()
+        }
+    }
     if (it.name == "assembleRelease") {
         it.doLast {
             def buildRoot = file("${project.layout.buildDirectory.get()}\\outputs\\aar")
