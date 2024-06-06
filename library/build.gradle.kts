@@ -7,12 +7,13 @@ plugins {
     signing
 }
 android {
-    namespace = "com.iamverycute.iconpackmanager"
+    namespace = "cn.lalaki.iconpackmanager"
     compileSdkPreview = "VanillaIceCream"
-    version = 6.6
+    version = 6.7
     buildTypes {
         named("release") {
             isMinifyEnabled = false
+            isDefault = true
         }
     }
     compileOptions {
@@ -26,14 +27,15 @@ tasks.withType<AarMetadataTask> {
     isEnabled = false
 }
 tasks.configureEach {
-    if (name.contains("checkDebugAndroidTestAarMetadata", ignoreCase = true))
+    if (name.contains("checkDebugAndroidTestAarMetadata", ignoreCase = true)) {
         enabled = false
+    }
 }
 publishing {
     repositories {
         maven {
             name = "localPluginRepository"
-            val publishToLocal = true
+            val publishToLocal = false
             if (publishToLocal) {
                 url = uri("D:\\repo\\")
             } else {
@@ -49,7 +51,7 @@ publishing {
         create<MavenPublication>("release") {
             val githubUrl = "https://github.com/lalakii/IconPackManager"
             artifactId = "IconPackManager"
-            groupId = "com.iamverycute"
+            groupId = "cn.lalaki"
             afterEvaluate { artifact(tasks.named("bundleReleaseAar")) }
             pom {
                 name = "IconPackManager"
@@ -69,10 +71,14 @@ publishing {
                 }
                 scm {
                     url = githubUrl
-                    connection = "scm:git:${githubUrl}.git"
-                    developerConnection = "scm:git:${githubUrl}.git"
+                    connection = "scm:git:$githubUrl.git"
+                    developerConnection = "scm:git:$githubUrl.git"
                 }
             }
         }
     }
+}
+signing {
+    useGpgCmd()
+    sign(publishing.publications["release"])
 }

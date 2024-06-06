@@ -1,4 +1,4 @@
-package com.iamverycute.iconpackmanager
+package cn.lalaki.iconpackmanager
 
 import android.content.ComponentName
 import android.content.Intent
@@ -18,26 +18,35 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import org.xmlpull.v1.XmlPullParser
 
-@Suppress("DiscouragedApi", "Unused", "Deprecation")
+@Suppress("DiscouragedApi", "Unused", "Deprecation", "WrongConstant")
 open class IconPackManager(val pm: PackageManager) {
     private val iconPacks by lazy { mutableListOf<IconPack>() }
+
     open fun isSupportedIconPacks() = isSupportedIconPacks(false)
+
     open fun isSupportedIconPacks(reload: Boolean): MutableList<IconPack> {
         if (iconPacks.isEmpty() || reload) {
             iconPacks.clear()
             for (info in pm.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-                PackageManager.GET_ACTIVITIES
+                PackageManager.GET_ACTIVITIES,
             )) {
-                if (info.activityInfo.flags and (ApplicationInfo.FLAG_SYSTEM) == 0) try {
-                    val res = pm.getResourcesForApplication(info.activityInfo.packageName)
-                    val id = res.getIdentifier("appfilter", "xml", info.activityInfo.packageName)
-                    if (id > 0) {
-                        iconPacks += IconPack(
-                            info.activityInfo.packageName, info.loadLabel(pm), res, id
-                        )
+                if (info.activityInfo.flags and (ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    try {
+                        val res = pm.getResourcesForApplication(info.activityInfo.packageName)
+                        val id =
+                            res.getIdentifier("appfilter", "xml", info.activityInfo.packageName)
+                        if (id > 0) {
+                            iconPacks +=
+                                IconPack(
+                                    info.activityInfo.packageName,
+                                    info.loadLabel(pm),
+                                    res,
+                                    id,
+                                )
+                        }
+                    } catch (_: Throwable) {
                     }
-                } catch (_: Exception) {
                 }
             }
         }
@@ -49,7 +58,10 @@ open class IconPackManager(val pm: PackageManager) {
     private val path by lazy { Path() }
 
     open inner class IconPack(
-        val packageName: String, val name: CharSequence, private val res: Resources, id: Int
+        val packageName: String,
+        val name: CharSequence,
+        private val res: Resources,
+        id: Int,
     ) {
         private val caches by lazy { hashMapOf<String, ComponentName>() }
         private var rules: HashMap<String, Array<out String>>? = null
@@ -70,7 +82,7 @@ open class IconPackManager(val pm: PackageManager) {
                         }
                         next()
                     }
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                 } finally {
                     close()
                 }
@@ -113,7 +125,8 @@ open class IconPackManager(val pm: PackageManager) {
                 }
             }
             pm.getPackageArchiveInfo(
-                info.sourceDir, PackageManager.GET_ACTIVITIES
+                info.sourceDir,
+                PackageManager.GET_ACTIVITIES,
             )?.activities?.forEach {
                 val icon = loadIcon(ComponentName(info.packageName, it.name))
                 if (icon != null) {
@@ -127,14 +140,15 @@ open class IconPackManager(val pm: PackageManager) {
             val comp = launchIntent.component ?: return null
             return loadIcon(comp) ?: loadIcon(
                 pm.getApplicationInfo(
-                    comp.packageName, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    comp.packageName,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         PackageManager.MATCH_UNINSTALLED_PACKAGES
                     } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CUPCAKE) {
                         PackageManager.GET_UNINSTALLED_PACKAGES
                     } else {
                         0
-                    }
-                )
+                    },
+                ),
             )
         }
 
@@ -168,7 +182,10 @@ open class IconPackManager(val pm: PackageManager) {
             this.rules = r
         }
 
-        open fun transformIcon(drawable: Drawable, vararg params: Float): BitmapDrawable {
+        open fun transformIcon(
+            drawable: Drawable,
+            vararg params: Float,
+        ): BitmapDrawable {
             var radius: Float? = null
             var scale: Float? = null
             for (p in params) {
@@ -180,9 +197,12 @@ open class IconPackManager(val pm: PackageManager) {
                     this.saturation = p
                 }
             }
-            val icon = Bitmap.createBitmap(
-                drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888
-            )
+            val icon =
+                Bitmap.createBitmap(
+                    drawable.intrinsicWidth,
+                    drawable.intrinsicHeight,
+                    Bitmap.Config.ARGB_8888,
+                )
             val canvas = Canvas(icon)
             val side = canvas.width.toFloat()
             if (scale != null) {

@@ -4,7 +4,8 @@ import java.time.format.DateTimeFormatter
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("cn.lalaki.repack") version "1.0.11"
+    id("cn.lalaki.repack") version "1.0.13"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 android {
     namespace = "cn.lalaki.tinydesk"
@@ -22,12 +23,6 @@ android {
         resourceConfigurations.add("en")
     }
     signingConfigs {
-        getByName("debug") {
-            storeFile = file("D:\\imoe.jks")
-            storePassword = System.getenv("mystorepass")
-            keyAlias = "dazen@189.cn"
-            keyPassword = System.getenv("mystorepass2")
-        }
         register("release") {
             storeFile = file("D:\\imoe.jks")
             storePassword = System.getenv("mystorepass")
@@ -37,13 +32,14 @@ android {
     }
     buildTypes {
         release {
+            isDefault = true
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
             isJniDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
         }
@@ -53,35 +49,44 @@ android {
         includeInBundle = false
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_22
+        targetCompatibility = JavaVersion.VERSION_22
     }
-    kotlinOptions.jvmTarget = "21"
+    kotlinOptions.jvmTarget = "22"
     buildToolsVersion = "35.0.0 rc4"
 }
 repackConfig {
     sevenZip =
-        File("C:\\Users\\sa\\Downloads\\7z2404-extra\\x64\\7za.exe") //7zip的可执行文件（控制台版本），可以在：https://www.7-zip.org 下载
-    resign = true //对重新打包的apk签名
-    addV2Sign = false //v2签名，android9以下需要
+        File("C:\\Users\\sa\\Downloads\\7z2404-extra\\x64\\7za.exe") // 7zip的可执行文件（控制台版本），可以在：https://www.7-zip.org 下载
+    resign = true // 对重新打包的apk签名
+    addV2Sign = false // v2签名，android9以下需要
     addV1Sign = true
     disableV3V4 = true
-    blacklist = arrayOf(
-        "META-INF",
-        "kotlin-tooling-metadata.json",
-        "kotlin"
-    ) //重新打包时，可以排除某些无用的文件或文件夹，可以为null
-    quiet = false //控制台输出日志
+    blacklist =
+        arrayOf(
+            "META-INF",
+            "kotlin-tooling-metadata.json",
+            "kotlin",
+            "unused",
+        ) // 重新打包时，可以排除某些无用的文件或文件夹，可以为null
+    quiet = false // 控制台输出日志
 }
 dependencies {
     implementation(project(":library"))
-    implementation("com.belerweb:pinyin4j:2.5.1")
+    implementation("cn.lalaki:pinyin4j-chinese-simplified:1.0.7")
     implementation("androidx.recyclerview:recyclerview:1.4.0-alpha01")
 }
 tasks.configureEach {
     if (arrayOf("aarmetadata", "artprofile", "jni", "native").any {
             name.contains(it, ignoreCase = true)
-        }) {
+        }
+    ) {
         enabled = false
     }
+}
+configurations.all {
+    exclude("androidx.profileinstaller", "profileinstaller")
+    exclude("androidx.versionedparcelable", "versionedparcelable")
+    exclude("androidx.emoji2", "emoji2")
+    exclude("androidx.appcompat", "appcompat-resources")
 }

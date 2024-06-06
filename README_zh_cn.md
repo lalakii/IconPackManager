@@ -1,5 +1,5 @@
 # IconPackManager
-[![Maven Central](https://img.shields.io/maven-central/v/com.iamverycute/IconPackManager.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.iamverycute/IconPackManager/) ![API: 14+ (shields.io)](https://img.shields.io/badge/API-14+-green) ![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/license-Apache--2.0-brightgreen)
+[![Maven Central](https://img.shields.io/maven-central/v/cn.lalaki/IconPackManager.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/cn.lalaki/IconPackManager/) ![API: 14+ (shields.io)](https://img.shields.io/badge/API-14+-green) ![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/license-Apache--2.0-brightgreen)
 
 [ [中文说明](#) | [English](README.md) ]
 
@@ -20,14 +20,14 @@
 
     ```kotlin
     dependencies {
-        implementation("com.iamverycute:IconPackManager:6.6")
+        implementation("cn.lalaki:IconPackManager:6.7")
     }
     ```
 
 2. 代码示例
 
    ```kotlin
-   import com.iamverycute.iconpackmanager.IconPackManager
+   import cn.lalaki.iconpackmanager.IconPackManager
    
    // IconPackManager
    val ipm = IconPackManager(packageManager)
