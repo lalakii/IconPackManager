@@ -1,5 +1,3 @@
-import com.android.build.gradle.internal.tasks.AarMetadataTask
-
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -9,7 +7,7 @@ plugins {
 android {
     namespace = "cn.lalaki.iconpackmanager"
     compileSdkPreview = "VanillaIceCream"
-    version = 6.7
+    version = 6.8
     buildTypes {
         named("release") {
             isMinifyEnabled = false
@@ -23,11 +21,8 @@ android {
     kotlinOptions.jvmTarget = "17"
     buildToolsVersion = "35.0.0 rc4"
 }
-tasks.withType<AarMetadataTask> {
-    isEnabled = false
-}
 tasks.configureEach {
-    if (name.contains("checkDebugAndroidTestAarMetadata", ignoreCase = true)) {
+    if (name.contains("AarMetadata", ignoreCase = true)) {
         enabled = false
     }
 }
@@ -35,7 +30,7 @@ publishing {
     repositories {
         maven {
             name = "localPluginRepository"
-            val publishToLocal = false
+            val publishToLocal = true
             if (publishToLocal) {
                 url = uri("D:\\repo\\")
             } else {
@@ -81,4 +76,14 @@ publishing {
 signing {
     useGpgCmd()
     sign(publishing.publications["release"])
+}
+tasks.register("iSign") {
+    signing {
+        useGpgCmd()
+        file("D:\\repo\\cn\\lalaki\\IconPackManager\\6.8\\").listFiles()?.forEach {
+            if (!it.endsWith(".asc")) {
+                sign(it)
+            }
+        }
+    }
 }

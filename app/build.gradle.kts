@@ -37,11 +37,12 @@ android {
             isShrinkResources = true
             isDebuggable = false
             isJniDebuggable = false
+            renderscriptOptimLevel = 3
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs["release"]
         }
     }
     dependenciesInfo {

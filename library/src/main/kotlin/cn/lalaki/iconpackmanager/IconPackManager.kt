@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.content.res.XmlResourceParser
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -16,11 +17,16 @@ import android.graphics.RectF
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import org.xmlpull.v1.XmlPullParser
 
-@Suppress("DiscouragedApi", "Unused", "Deprecation", "WrongConstant")
-open class IconPackManager(val pm: PackageManager) {
+@Suppress("unused", "deprecation")
+open class IconPackManager(
+    val pm: PackageManager,
+) {
     private val iconPacks by lazy { mutableListOf<IconPack>() }
+    private val paint by lazy { Paint() }
+    private val rect by lazy { RectF() }
+    private val path by lazy { Path() }
+    private val type = "drawable"
 
     open fun isSupportedIconPacks() = isSupportedIconPacks(false)
 
@@ -29,20 +35,20 @@ open class IconPackManager(val pm: PackageManager) {
             iconPacks.clear()
             for (info in pm.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-                PackageManager.GET_ACTIVITIES,
+                PackageManager.GET_META_DATA,
             )) {
                 if (info.activityInfo.flags and (ApplicationInfo.FLAG_SYSTEM) == 0) {
                     try {
                         val res = pm.getResourcesForApplication(info.activityInfo.packageName)
                         val id =
-                            res.getIdentifier("appfilter", "xml", info.activityInfo.packageName)
+                            getIdentifier(res, "appfilter", "xml", info.activityInfo.packageName)
                         if (id > 0) {
                             iconPacks +=
                                 IconPack(
+                                    res.getXml(id),
+                                    res,
                                     info.activityInfo.packageName,
                                     info.loadLabel(pm),
-                                    res,
-                                    id,
                                 )
                         }
                     } catch (_: Throwable) {
@@ -53,15 +59,18 @@ open class IconPackManager(val pm: PackageManager) {
         return iconPacks
     }
 
-    private val paint by lazy { Paint() }
-    private val rect by lazy { RectF() }
-    private val path by lazy { Path() }
+    private fun getIdentifier(
+        res: Resources,
+        name: String,
+        type: String,
+        packageName: String,
+    ) = res.getIdentifier(name, type, packageName)
 
     open inner class IconPack(
+        xml: XmlResourceParser,
+        private val res: Resources,
         val packageName: String,
         val name: CharSequence,
-        private val res: Resources,
-        id: Int,
     ) {
         private val caches by lazy { hashMapOf<String, ComponentName>() }
         private var rules: HashMap<String, Array<out String>>? = null
@@ -72,19 +81,20 @@ open class IconPackManager(val pm: PackageManager) {
         }
 
         init {
-            res.getXml(id).run {
-                try {
-                    while (eventType != XmlPullParser.END_DOCUMENT) {
-                        if (eventType == XmlPullParser.START_TAG && name == "item") {
-                            val key = getAttributeValue(null, "component")
-                            val value = getAttributeValue(null, "drawable")
-                            if (!key.isNullOrEmpty() && !value.isNullOrEmpty()) icons[key] = value
+            xml.run {
+                use {
+                    while (eventType != XmlResourceParser.END_DOCUMENT) {
+                        if (eventType == XmlResourceParser.START_TAG && name == "item") {
+                            val value = getAttributeValue(null, type)
+                            if (!value.isNullOrEmpty()) {
+                                val key = getAttributeValue(null, "component")
+                                if (!key.isNullOrEmpty()) {
+                                    icons[key] = value
+                                }
+                            }
                         }
                         next()
                     }
-                } catch (_: Throwable) {
-                } finally {
-                    close()
                 }
             }
         }
@@ -104,9 +114,9 @@ open class IconPackManager(val pm: PackageManager) {
         }
 
         private fun getDrawable(value: String): BitmapDrawable? {
-            val resourceId = res.getIdentifier(value, "drawable", packageName)
-            if (resourceId > 0) {
-                val bmp = BitmapFactory.decodeResource(res, resourceId)
+            val id = getIdentifier(res, value, type, packageName)
+            if (id > 0) {
+                val bmp = BitmapFactory.decodeResource(res, id)
                 return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                     BitmapDrawable(bmp)
                 } else {
@@ -124,13 +134,14 @@ open class IconPackManager(val pm: PackageManager) {
                     if (icon != null) return icon
                 }
             }
-            pm.getPackageArchiveInfo(
-                info.sourceDir,
-                PackageManager.GET_ACTIVITIES,
-            )?.activities?.forEach {
-                val icon = loadIcon(ComponentName(info.packageName, it.name))
-                if (icon != null) {
-                    return icon
+            val activities =
+                pm.getPackageArchiveInfo(info.sourceDir, PackageManager.GET_ACTIVITIES)?.activities
+            if (activities != null) {
+                for (it in activities) {
+                    val icon = loadIcon(ComponentName(info.packageName, it.name))
+                    if (icon != null) {
+                        return icon
+                    }
                 }
             }
             return null

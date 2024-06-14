@@ -14,11 +14,8 @@
     public static int d(...);
     public static int e(...);
     public static java.lang.String getStackTraceString(java.lang.Throwable);}
--assumenosideeffects class java.io.PrintStream {
-     public void println(%);
-     public void println(**);
-     public *** print(...);
-     public *** println(...);}
+-assumenosideeffects class java.io.PrintStream { *;}
+-assumenosideeffects class java.io.PrintWriter { *;}
 -assumenosideeffects class java.util.logging.Logger {
      public *** log(...);
      public *** logp(...);}
@@ -30,3 +27,4 @@
 -assumenosideeffects class androidx.activity.OnBackPressedDispatcher{ *;}
 -assumenosideeffects class androidx.activity.OnBackPressedDispatcher$LifecycleOnBackPressedCancellable{ *;}
 -assumenosideeffects class androidx.activity.ImmLeaksCleaner{ *;}
+-dontwarn java.lang.*

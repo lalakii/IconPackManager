@@ -34,7 +34,10 @@ import java.io.PrintWriter
 import java.util.Collections
 
 @Suppress("QueryPermissionsNeeded", "InternalInsetResource", "DiscouragedApi")
-class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
+class MainActivity :
+    Activity(),
+    OnQueryTextListener,
+    OnLongClickListener {
     private val appMap = linkedMapOf<String, AppModel>()
     private val recycler by lazy {
         RecyclerView(this).apply {
@@ -73,14 +76,15 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                 setBackgroundColor(Color.argb(35, 255, 255, 255))
                 addView(
                     search,
-                    LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                    ).apply {
-                        leftMargin = 20
-                        rightMargin = 20
-                        topMargin = statusBarHeight + 20
-                    },
+                    LinearLayout
+                        .LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                        ).apply {
+                            leftMargin = 20
+                            rightMargin = 20
+                            topMargin = statusBarHeight + 20
+                        },
                 )
                 addView(
                     recycler,
@@ -120,12 +124,15 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                 appName.contains(
                     "gboard",
                     ignoreCase = true,
-                ) || packageName == app.activityInfo.packageName || app.activityInfo.packageName == iconPack?.packageName
+                ) ||
+                packageName == app.activityInfo.packageName ||
+                app.activityInfo.packageName == iconPack?.packageName
             ) {
                 continue
             }
             val launchIntent =
-                Intent().setClassName(app.activityInfo.packageName, app.activityInfo.name)
+                Intent()
+                    .setClassName(app.activityInfo.packageName, app.activityInfo.name)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             var icon = app.loadIcon(pm)
             if (iconPack != null) {
@@ -176,9 +183,10 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                 for (c in appName) {
                     try {
                         app0.pinyin +=
-                            BasePinyinHelper.toHanyuPinyinStringArray(this, c)
+                            BasePinyinHelper
+                                .toHanyuPinyinStringArray(this, c)
                                 .joinToString(transform = { it.replace(Regex("\\d+"), "") })
-                    } catch (_: Exception) {
+                    } catch (_: Throwable) {
                     }
                 }
             }
@@ -202,7 +210,11 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                     c: Context,
                     i: Intent,
                 ) {
-                    val packageName = i.dataString.toString().split(':').last()
+                    val packageName =
+                        i.dataString
+                            .toString()
+                            .split(':')
+                            .last()
                     val adapter = recycler.adapter as AppListAdapter
                     when (i.action) {
                         Intent.ACTION_PACKAGE_ADDED -> {
@@ -212,7 +224,7 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                         Intent.ACTION_PACKAGE_REMOVED -> {
                             try {
                                 pm.getApplicationEnabledSetting(packageName)
-                            } catch (_: IllegalArgumentException) {
+                            } catch (_: Throwable) {
                                 var delIndex = -1
                                 adapter.map.onEachIndexed { index, entry ->
                                     if (entry.key == packageName) delIndex = index
@@ -286,9 +298,7 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
         return super.onKeyDown(keyCode, event)
     }
 
-    override fun onQueryTextSubmit(query: String?): Boolean {
-        return false
-    }
+    override fun onQueryTextSubmit(query: String?): Boolean = false
 
     @Suppress("NotifyDataSetChanged", "UNCHECKED_CAST")
     override fun onQueryTextChange(newText: String?): Boolean {
@@ -317,7 +327,7 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                                     "选择壁纸",
                                 ),
                             )
-                        } catch (_: java.lang.Exception) {
+                        } catch (_: Throwable) {
                         }
                         return true
                     }
@@ -330,7 +340,8 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
                             !it.value.pinyin.contains(
                                 text,
                                 ignoreCase = true,
-                            ) && !it.key.contains(text, ignoreCase = true)
+                            ) &&
+                            !it.key.contains(text, ignoreCase = true)
                         ) {
                             removeList.add(it.key)
                         }
@@ -369,8 +380,10 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
         var pinyin: String = ""
     }
 
-    inner class AppViewHolder(private val adapter: AppListAdapter, itemView: View) :
-        ViewHolder(itemView) {
+    inner class AppViewHolder(
+        private val adapter: AppListAdapter,
+        itemView: View,
+    ) : ViewHolder(itemView) {
         private var view = itemView.findViewById<TextView>(R.id.tv)
         private val animaCache by lazy {
             AnimationUtils.loadAnimation(itemView.context, R.anim.shake)
@@ -426,20 +439,20 @@ class MainActivity : Activity(), OnQueryTextListener, OnLongClickListener {
         }
     }
 
-    inner class AppListAdapter(var map: LinkedHashMap<String, AppModel>) :
-        RecyclerView.Adapter<AppViewHolder>() {
+    inner class AppListAdapter(
+        var map: LinkedHashMap<String, AppModel>,
+    ) : RecyclerView.Adapter<AppViewHolder>() {
         private val helper = HolderTouchHelper()
         var canDrag = false
 
         override fun onCreateViewHolder(
             parent: ViewGroup,
             viewType: Int,
-        ): AppViewHolder {
-            return AppViewHolder(
+        ): AppViewHolder =
+            AppViewHolder(
                 this,
                 LayoutInflater.from(parent.context).inflate(R.layout.item, parent, false),
             )
-        }
 
         fun swap(
             source: Int,
