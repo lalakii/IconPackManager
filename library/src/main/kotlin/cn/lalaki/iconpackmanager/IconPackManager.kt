@@ -18,7 +18,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 
-@Suppress("unused", "deprecation")
+@Suppress("unused", "deprecation", "DiscouragedApi")
 open class IconPackManager(
     val pm: PackageManager,
 ) {
@@ -72,7 +72,7 @@ open class IconPackManager(
         val packageName: String,
         val name: CharSequence,
     ) {
-        private val caches by lazy { hashMapOf<String, ComponentName>() }
+        private val caches by lazy { hashMapOf<String, String>() }
         private var rules: HashMap<String, Array<out String>>? = null
         private val icons = hashMapOf<String, String>()
         private var saturation = 1f
@@ -84,7 +84,11 @@ open class IconPackManager(
             xml.run {
                 use {
                     while (eventType != XmlResourceParser.END_DOCUMENT) {
-                        if (eventType == XmlResourceParser.START_TAG && name == "item") {
+                        if (eventType == XmlResourceParser.START_TAG && "item".equals(
+                                name,
+                                ignoreCase = true
+                            )
+                        ) {
                             val value = getAttributeValue(null, type)
                             if (!value.isNullOrEmpty()) {
                                 val key = getAttributeValue(null, "component")
@@ -130,7 +134,7 @@ open class IconPackManager(
             if (caches.containsKey(info.packageName)) {
                 val comp = caches[info.packageName]
                 if (comp != null) {
-                    val icon = loadIcon(comp)
+                    val icon = loadIcon(comp,info.packageName)
                     if (icon != null) return icon
                 }
             }
@@ -141,6 +145,14 @@ open class IconPackManager(
                     val icon = loadIcon(ComponentName(info.packageName, it.name))
                     if (icon != null) {
                         return icon
+                    }
+                }
+                for (it in icons) {
+                    if (it.key.contains("${info.packageName}/", ignoreCase = true)) {
+                        val icon = loadIcon(it.key, info.packageName)
+                        if (icon != null) {
+                            return icon
+                        }
                     }
                 }
             }
@@ -164,12 +176,16 @@ open class IconPackManager(
         }
 
         open fun loadIcon(comp: ComponentName): BitmapDrawable? {
-            var drawableVal = icons[comp.toString()]
+            return loadIcon(comp.toString(), comp.packageName)
+        }
+
+        open fun loadIcon(comp: String, pkgName: String): BitmapDrawable? {
+            var drawableVal = icons[comp]
             if (drawableVal.isNullOrEmpty()) {
                 val rules = this.rules ?: return null
                 var words: Array<out String>? = null
                 for (it in rules) {
-                    if (comp.packageName.contains(it.key, ignoreCase = true)) {
+                    if (pkgName.contains(it.key, ignoreCase = true)) {
                         words = rules[it.key]
                         break
                     }
@@ -183,7 +199,7 @@ open class IconPackManager(
                 }
             }
             if (!drawableVal.isNullOrEmpty()) {
-                caches[comp.packageName] = comp
+                caches[pkgName] = comp
                 return getDrawable(drawableVal)
             }
             return null

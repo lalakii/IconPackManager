@@ -1,26 +1,29 @@
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("cn.lalaki.repack") version "3.0.0-LTS"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
 }
 android {
     namespace = "cn.lalaki.tinydesk"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = namespace
-        minSdk = 14
+        minSdk = 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 29
-        versionCode = 5
+        versionCode = 6
         versionName =
             "$versionCode.${
                 ZonedDateTime.now().toLocalDate().format(DateTimeFormatter.ofPattern("MMdd"))
             }"
-        resourceConfigurations.add("en")
+        @Suppress("deprecation")
+        val config = resourceConfigurations
+        config.clear()
+        config.add("en")
     }
     signingConfigs {
         register("release") {
@@ -35,13 +38,13 @@ android {
             isDefault = true
             isMinifyEnabled = true
             isShrinkResources = true
-            isDebuggable = false
+            isDebuggable = true
             isJniDebuggable = false
             renderscriptOptimLevel = 3
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro",
+//            )
             signingConfig = signingConfigs["release"]
         }
     }
@@ -53,8 +56,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_22
         targetCompatibility = JavaVersion.VERSION_22
     }
-    kotlinOptions.jvmTarget = "22"
-    buildToolsVersion = "35.0.0"
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_22
+        }
+    }
+    buildToolsVersion = "36.1.0"
 }
 repackConfig {
     resign = true // 对重新打包的apk签名
@@ -73,7 +80,7 @@ repackConfig {
 dependencies {
     implementation(project(":library"))
     implementation("cn.lalaki:pinyin4j-chinese-simplified:1.0.7")
-    implementation("androidx.recyclerview:recyclerview:1.4.0-alpha01")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
 }
 tasks.configureEach {
     if (arrayOf("aarmetadata", "artprofile", "jni", "native").any {
