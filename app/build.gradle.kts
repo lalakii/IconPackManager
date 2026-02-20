@@ -1,6 +1,7 @@
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -9,7 +10,7 @@ plugins {
 }
 android {
     namespace = "cn.lalaki.tinydesk"
-    compileSdk = 36
+    compileSdkPreview = "CinnamonBun"
     defaultConfig {
         applicationId = namespace
         minSdk = 21
@@ -38,13 +39,13 @@ android {
             isDefault = true
             isMinifyEnabled = true
             isShrinkResources = true
-            isDebuggable = true
+            isDebuggable = false
             isJniDebuggable = false
             renderscriptOptimLevel = 3
-//            proguardFiles(
-//                getDefaultProguardFile("proguard-android-optimize.txt"),
-//                "proguard-rules.pro",
-//            )
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             signingConfig = signingConfigs["release"]
         }
     }

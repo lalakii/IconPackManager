@@ -27,9 +27,7 @@ open class IconPackManager(
     private val rect by lazy { RectF() }
     private val path by lazy { Path() }
     private val type = "drawable"
-
     open fun isSupportedIconPacks() = isSupportedIconPacks(false)
-
     open fun isSupportedIconPacks(reload: Boolean): MutableList<IconPack> {
         if (iconPacks.isEmpty() || reload) {
             iconPacks.clear()
@@ -43,13 +41,12 @@ open class IconPackManager(
                         val id =
                             getIdentifier(res, "appfilter", "xml", info.activityInfo.packageName)
                         if (id > 0) {
-                            iconPacks +=
-                                IconPack(
-                                    res.getXml(id),
-                                    res,
-                                    info.activityInfo.packageName,
-                                    info.loadLabel(pm),
-                                )
+                            iconPacks += IconPack(
+                                res.getXml(id),
+                                res,
+                                info.activityInfo.packageName,
+                                info.loadLabel(pm),
+                            )
                         }
                     } catch (_: Throwable) {
                     }
@@ -85,8 +82,7 @@ open class IconPackManager(
                 use {
                     while (eventType != XmlResourceParser.END_DOCUMENT) {
                         if (eventType == XmlResourceParser.START_TAG && "item".equals(
-                                name,
-                                ignoreCase = true
+                                name, ignoreCase = true
                             )
                         ) {
                             val value = getAttributeValue(null, type)
@@ -103,6 +99,10 @@ open class IconPackManager(
             }
         }
 
+        open fun clearCache() {
+            caches.clear()
+        }
+
         @Deprecated("There may be serious performance loss.")
         open fun getAllIconResources(): HashMap<String, BitmapDrawable> {
             val drawables = hashMapOf<String, BitmapDrawable>()
@@ -117,15 +117,40 @@ open class IconPackManager(
             return drawables
         }
 
+        private fun getBitmapDrawable(bmp: Bitmap): BitmapDrawable {
+            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                BitmapDrawable(bmp)
+            } else {
+                BitmapDrawable(res, bmp)
+            }
+        }
+
+        private fun getBitmap(id: Int): Bitmap {
+            val drawable = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                res.getDrawable(id)
+            } else {
+                res.getDrawable(id, null)
+            }
+            var width = drawable.intrinsicWidth
+            var height = drawable.intrinsicHeight
+            if (width < 1 || height < 1) {
+                width = 512
+                height = 512
+            }
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            drawable.setBounds(0, 0, width, height)
+            drawable.draw(Canvas(bmp))
+            return bmp
+        }
+
         private fun getDrawable(value: String): BitmapDrawable? {
             val id = getIdentifier(res, value, type, packageName)
             if (id > 0) {
-                val bmp = BitmapFactory.decodeResource(res, id)
-                return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                    BitmapDrawable(bmp)
-                } else {
-                    BitmapDrawable(res, bmp)
+                var bmp = BitmapFactory.decodeResource(res, id)
+                if (bmp == null) {
+                    bmp = getBitmap(id)
                 }
+                return getBitmapDrawable(bmp)
             }
             return null
         }
@@ -134,7 +159,7 @@ open class IconPackManager(
             if (caches.containsKey(info.packageName)) {
                 val comp = caches[info.packageName]
                 if (comp != null) {
-                    val icon = loadIcon(comp,info.packageName)
+                    val icon = loadIcon(comp, info.packageName)
                     if (icon != null) return icon
                 }
             }
@@ -176,7 +201,7 @@ open class IconPackManager(
         }
 
         open fun loadIcon(comp: ComponentName): BitmapDrawable? {
-            return loadIcon(comp.toString(), comp.packageName)
+            return loadIcon("$comp", comp.packageName)
         }
 
         open fun loadIcon(comp: String, pkgName: String): BitmapDrawable? {
@@ -224,12 +249,11 @@ open class IconPackManager(
                     this.saturation = p
                 }
             }
-            val icon =
-                Bitmap.createBitmap(
-                    drawable.intrinsicWidth,
-                    drawable.intrinsicHeight,
-                    Bitmap.Config.ARGB_8888,
-                )
+            val icon = Bitmap.createBitmap(
+                drawable.intrinsicWidth,
+                drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888,
+            )
             val canvas = Canvas(icon)
             val side = canvas.width.toFloat()
             if (scale != null) {
@@ -251,11 +275,7 @@ open class IconPackManager(
                 paint.colorFilter = colorFilter
                 Canvas(icon).drawBitmap(icon, 0f, 0f, paint)
             }
-            return if (Build.VERSION.SDK_INT > Build.VERSION_CODES.CUPCAKE) {
-                BitmapDrawable(null, icon)
-            } else {
-                BitmapDrawable(icon)
-            }
+            return getBitmapDrawable(icon)
         }
     }
 }

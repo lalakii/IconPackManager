@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -140,7 +141,7 @@ class MainActivity :
                 val iconPackName = iconPack.name.toString().lowercase()
                 if (customIcon == null) {
                     icon =
-                        if (iconPackName.contains("aura")) { // 这些图标默认是圆角
+                        if (iconPackName.contains("aura")||iconPackName.contains("color")) { // 这些图标默认是圆角
                             iconPack.transformIcon(
                                 icon,
                                 0.3f,
@@ -164,6 +165,17 @@ class MainActivity :
                         }
                 } else {
                     icon = customIcon
+                    try {
+                        Log.d(
+                            "ccccccccc",
+                            "icon${app.activityInfo.packageName}:h:${icon.bitmap.width},w:${icon.bitmap.height}"
+                        )
+                    } catch (_: Throwable) {
+                        Log.d(
+                            "ccccccccc",
+                            "eeeeeeeeeeee ${app.activityInfo.packageName}"
+                        )
+                    }
                 }
             }
             val app0 =

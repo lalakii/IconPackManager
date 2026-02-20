@@ -1,16 +1,16 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
     signing
     `maven-publish`
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
     id("cn.lalaki.central") version "2.0.2"
 }
 android {
     namespace = "cn.lalaki.iconpackmanager"
-    compileSdk = 36
-    version = 8.0
+    compileSdkPreview = "CinnamonBun"
+    version = 8.1
     buildTypes {
         named("release") {
             isMinifyEnabled = false
