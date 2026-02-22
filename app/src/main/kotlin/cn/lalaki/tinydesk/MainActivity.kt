@@ -12,7 +12,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -113,7 +112,8 @@ class MainActivity :
         recycler.setPadding(0, paddingSide, 0, paddingSide)
         val topVal = side / 8
         val pm = packageManager
-        val iconPack = IconPackManager(pm).isSupportedIconPacks().firstOrNull()
+        val iconPacks = IconPackManager(pm).isSupportedIconPacks()
+        val iconPack = iconPacks.firstOrNull()
         for (app in pm.queryIntentActivities(
             Intent(Intent.ACTION_MAIN).addCategory(
                 Intent.CATEGORY_LAUNCHER,
@@ -145,7 +145,7 @@ class MainActivity :
                             iconPack.transformIcon(
                                 icon,
                                 0.3f,
-                                0.92f,
+                               0.99f,
                             )
                         } else {
                             if (iconPackName.contains("delta")) {
@@ -165,17 +165,6 @@ class MainActivity :
                         }
                 } else {
                     icon = customIcon
-                    try {
-                        Log.d(
-                            "ccccccccc",
-                            "icon${app.activityInfo.packageName}:h:${icon.bitmap.width},w:${icon.bitmap.height}"
-                        )
-                    } catch (_: Throwable) {
-                        Log.d(
-                            "ccccccccc",
-                            "eeeeeeeeeeee ${app.activityInfo.packageName}"
-                        )
-                    }
                 }
             }
             val app0 =

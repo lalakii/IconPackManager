@@ -20,7 +20,7 @@
 
     ```kotlin
     dependencies {
-        implementation("cn.lalaki:IconPackManager:8.1")
+        implementation("cn.lalaki:IconPackManager:8.2")
     }
     ```
 
@@ -41,7 +41,7 @@
    }
 
    // Add rules for a custom icon
-   val rules = HashMap<String, Array<out String>>
+   val rules = hashMapOf<String, Array<out String>>()
    rules["com.android.chrome"]=arrayOf("browser","...")
    rules["com.android.email"]=arrayOf("mail","message")
    rules["video"]=arrayOf("tencent","youtube")

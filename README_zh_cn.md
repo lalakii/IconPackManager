@@ -20,7 +20,7 @@
 
     ```kotlin
     dependencies {
-        implementation("cn.lalaki:IconPackManager:8.1")
+        implementation("cn.lalaki:IconPackManager:8.2")
     }
     ```
 
@@ -41,7 +41,7 @@
    }
    
    // 为某个图标包添加自定义规则，图标包没有相应图标时，按照规则查找图标包内的图标
-   val rules = HashMap<String, Array<out String>> //key是包名，可模糊匹配；value是需要匹配的应用图标包名，可模糊匹配，支持多个参数
+   val rules = hashMapOf<String, Array<out String>>() //key是包名，可模糊匹配；value是需要匹配的应用图标包名，可模糊匹配，支持多个参数
    rules["com.android.chrome"]=arrayOf("browser","...")
    rules["com.android.email"]=arrayOf("mail","message")
    rules["video"]=arrayOf("tencent","youtube")

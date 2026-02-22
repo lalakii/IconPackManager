@@ -10,7 +10,7 @@ plugins {
 android {
     namespace = "cn.lalaki.iconpackmanager"
     compileSdkPreview = "CinnamonBun"
-    version = 8.1
+    version = 8.2
     buildTypes {
         named("release") {
             isMinifyEnabled = false
