@@ -3,7 +3,6 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
         google()
-        maven(url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
     }
 }
 @Suppress("UnstableApiUsage")
@@ -12,7 +11,6 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         google()
-        maven(url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
     }
 }
 rootProject.name = "IconPackManager"

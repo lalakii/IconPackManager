@@ -14,9 +14,8 @@ android {
     defaultConfig {
         applicationId = namespace
         minSdk = 21
-        //noinspection ExpiredTargetSdkVersion
-        targetSdk = 29
-        versionCode = 6
+        targetSdk = 37
+        versionCode = 8
         versionName =
             "$versionCode.${
                 ZonedDateTime.now().toLocalDate().format(DateTimeFormatter.ofPattern("MMdd"))
@@ -62,11 +61,11 @@ android {
             jvmTarget = JvmTarget.JVM_22
         }
     }
-    buildToolsVersion = "36.1.0"
+    buildToolsVersion = "37.0.0"
 }
 repackConfig {
     resign = true // 对重新打包的apk签名
-    addV2Sign = false // v2签名，android9以下需要
+    addV2Sign = true // v2
     addV1Sign = true
     disableV3V4 = true
     blacklist =

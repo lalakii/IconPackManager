@@ -21,6 +21,7 @@ import android.os.Build
 @Suppress("unused", "deprecation", "DiscouragedApi")
 open class IconPackManager(
     val pm: PackageManager,
+    var hardware: Boolean = false,
 ) {
     private val iconPacks by lazy { mutableListOf<IconPack>() }
     private val paint by lazy { Paint() }
@@ -121,12 +122,20 @@ open class IconPackManager(
             return drawables
         }
 
-        private fun createBitmapDrawable(icon: Bitmap) =
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                BitmapDrawable(icon)
-            } else {
-                BitmapDrawable(res, icon)
+        private fun createBitmapDrawable(icon: Bitmap): BitmapDrawable {
+            var bmp = icon
+            if (hardware && Build.VERSION.SDK_INT > Build.VERSION_CODES.N_MR1) {
+                bmp = icon.copy(Bitmap.Config.HARDWARE, false)
+                if (!icon.isRecycled) {
+                    icon.recycle()
+                }
             }
+            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                BitmapDrawable(bmp)
+            } else {
+                BitmapDrawable(res, bmp)
+            }
+        }
 
         private fun createBitmap(drawable: Drawable): Bitmap {
             var width = drawable.intrinsicWidth

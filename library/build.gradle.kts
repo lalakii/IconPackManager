@@ -1,16 +1,15 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    signing
-    `maven-publish`
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("cn.lalaki.central") version "2.0.2"
+    id("cn.lalaki.central") version "2.0.8"
 }
+group = "cn.lalaki"
 android {
     namespace = "cn.lalaki.iconpackmanager"
     compileSdkPreview = "CinnamonBun"
-    version = 8.2
+    version = 8.3
     buildTypes {
         named("release") {
             isMinifyEnabled = false
@@ -26,12 +25,7 @@ android {
             jvmTarget = JvmTarget.JVM_17
         }
     }
-    buildToolsVersion = "36.1.0"
-}
-tasks.configureEach {
-    if (name.contains("AarMetadata", ignoreCase = true)) {
-        // enabled = false
-    }
+    buildToolsVersion = "37.0.0"
 }
 signing {
     useGpgCmd()
@@ -40,8 +34,6 @@ signing {
 centralPortalPlus {
     tokenXml = uri("D:\\BIN\\token.txt")
 }
-group = "cn.lalaki"
-
 publishing {
     repositories {
         maven {
