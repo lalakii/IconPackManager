@@ -17,6 +17,11 @@ import android.graphics.RectF
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.webkit.ValueCallback
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.TimeUnit
 
 @Suppress("unused", "deprecation", "DiscouragedApi")
 open class IconPackManager(
@@ -111,15 +116,43 @@ open class IconPackManager(
         open fun getAllIconResources(): HashMap<String, BitmapDrawable> {
             val drawables = hashMapOf<String, BitmapDrawable>()
             val loadedDrawables = hashMapOf<String, BitmapDrawable>()
-            for (it in icons) {
-                val icon = loadedDrawables[it.value] ?: getDrawable(it.value, null)
+            for ((key, value) in icons) {
+                val icon = loadedDrawables[value] ?: getDrawable(value, null)
                 if (icon != null) {
-                    drawables[it.key] = icon
-                    loadedDrawables[it.value] = icon
+                    drawables[key] = icon
+                    loadedDrawables[value] = icon
                 }
             }
             loadedDrawables.clear()
             return drawables
+        }
+
+        open fun getAllIconResources(
+            timeoutSeconds: Long = 10L,
+            itemAddCallback: ValueCallback<Pair<String, BitmapDrawable>>,
+            doneCallback: Runnable
+        ) {
+            val threadPool by lazy {
+                ForkJoinPool()
+            }
+            threadPool.execute {
+                val loadedDrawables = ConcurrentHashMap<String, BitmapDrawable>()
+                val latch = CountDownLatch(icons.size)
+                for ((key, value) in icons) {
+                    threadPool.execute {
+                        val icon = loadedDrawables[value] ?: getDrawable(value, null)
+                        if (icon != null) {
+                            itemAddCallback.onReceiveValue(key to icon)
+                            loadedDrawables[value] = icon
+                        }
+                        latch.countDown()
+                    }
+                }
+                latch.await(timeoutSeconds, TimeUnit.SECONDS)
+                doneCallback.run()
+                loadedDrawables.clear()
+                threadPool.shutdown()
+            }
         }
 
         private fun createBitmapDrawable(icon: Bitmap): BitmapDrawable {

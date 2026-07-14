@@ -9,7 +9,7 @@ group = "cn.lalaki"
 android {
     namespace = "cn.lalaki.iconpackmanager"
     compileSdkPreview = "CinnamonBun"
-    version = 8.3
+    version = 8.5
     buildTypes {
         named("release") {
             isMinifyEnabled = false
