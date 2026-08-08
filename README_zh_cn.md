@@ -1,5 +1,8 @@
 # IconPackManager
-[![Maven Central](https://img.shields.io/maven-central/v/cn.lalaki/IconPackManager.svg?label=Maven%20Central&logo=sonatype)](https://central.sonatype.com/artifact/cn.lalaki/IconPackManager/) ![API: 14+ (shields.io)](https://img.shields.io/badge/API-14+-2f9b45?logo=android) ![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/License-Apache--2.0-c02041?logo=apache)
+[![Maven Central](https://img.shields.io/maven-central/v/cn.lalaki/IconPackManager.svg?label=Maven%20Central&logo=sonatype)](https://central.sonatype.com/artifact/cn.lalaki/IconPackManager/)
+![API: 14+ (shields.io)](https://img.shields.io/badge/API-14+-2f9b45?logo=android) 
+[![Downloads](https://img.shields.io/github/downloads/lalakii/IconPackManager/total)](https://github.com/lalakii/IconPackManager/releases)
+![License: Apache-2.0 (shields.io)](https://img.shields.io/badge/License-Apache--2.0-c02041?logo=apache)
 
 [ [中文说明](#) | [English](README.md) ]
 
