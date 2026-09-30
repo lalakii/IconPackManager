@@ -17,13 +17,11 @@ import android.graphics.RectF
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.webkit.ValueCallback
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-@Suppress("unused", "deprecation", "DiscouragedApi")
+@Suppress("unused", "Deprecation", "DiscouragedApi")
 open class IconPackManager(
     val pm: PackageManager,
     var hardware: Boolean = false,
@@ -32,6 +30,7 @@ open class IconPackManager(
     private val paint by lazy { Paint() }
     private val rect by lazy { RectF() }
     private val path by lazy { Path() }
+    private val maxSide = 192
     private val type = "drawable"
     open fun isSupportedIconPacks() = isSupportedIconPacks(false)
     open fun isSupportedIconPacks(reload: Boolean): MutableList<IconPack> {
@@ -39,7 +38,7 @@ open class IconPackManager(
             iconPacks.clear()
             for (info in pm.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-                PackageManager.GET_GIDS,
+                0,
             )) {
                 if (info.activityInfo.flags and (ApplicationInfo.FLAG_SYSTEM) == 0) {
                     try {
@@ -75,19 +74,19 @@ open class IconPackManager(
         val packageName: String,
         val name: CharSequence,
     ) {
-        private val caches by lazy { hashMapOf<String, Int>() }
-        private val drawableCaches by lazy { hashMapOf<String, Int>() }
-        private var rules: HashMap<String, Array<out String>>? = null
-        private val icons = hashMapOf<String, String>()
         private var saturation = 1f
+        private val icons = hashMapOf<String, String>()
+        private val caches by lazy { hashMapOf<String, Int>() }
+        private val drawableCaches by lazy { ConcurrentHashMap<String, Int>() }
         private val colorFilter by lazy {
             ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(saturation) })
         }
+        private var rules: HashMap<String, Array<out String>>? = null
 
         init {
             xml.run {
                 while (next() != XmlResourceParser.END_DOCUMENT) {
-                    if (eventType == XmlResourceParser.START_TAG && "item".equals(
+                    if ("item".equals(
                             name, ignoreCase = true
                         )
                     ) {
@@ -112,7 +111,7 @@ open class IconPackManager(
             drawableCaches.clear()
         }
 
-        @Deprecated("There may be serious performance loss.")
+        @Deprecated("May cause significant performance issues; call on the main thread.")
         open fun getAllIconResources(): HashMap<String, BitmapDrawable> {
             val drawables = hashMapOf<String, BitmapDrawable>()
             val loadedDrawables = hashMapOf<String, BitmapDrawable>()
@@ -128,31 +127,29 @@ open class IconPackManager(
         }
 
         open fun getAllIconResources(
-            timeoutSeconds: Long = 10L,
-            itemAddCallback: ValueCallback<Pair<String, BitmapDrawable>>,
-            doneCallback: Runnable
+            timeoutSeconds: Long = 10L, callback: Callback<Pair<String, BitmapDrawable>>
         ) {
-            val threadPool by lazy {
-                ForkJoinPool()
-            }
-            threadPool.execute {
+            Thread {
+                val iconLoaderExecutor = Executors.newFixedThreadPool(
+                    Runtime.getRuntime().availableProcessors() + 1
+                ) {
+                    Thread(it).apply { isDaemon = true }
+                }
                 val loadedDrawables = ConcurrentHashMap<String, BitmapDrawable>()
-                val latch = CountDownLatch(icons.size)
                 for ((key, value) in icons) {
-                    threadPool.execute {
+                    iconLoaderExecutor.execute {
                         val icon = loadedDrawables[value] ?: getDrawable(value, null)
                         if (icon != null) {
-                            itemAddCallback.onReceiveValue(key to icon)
+                            callback.onAdd(key to icon)
                             loadedDrawables[value] = icon
                         }
-                        latch.countDown()
                     }
                 }
-                latch.await(timeoutSeconds, TimeUnit.SECONDS)
-                doneCallback.run()
+                iconLoaderExecutor.shutdown()
+                iconLoaderExecutor.awaitTermination(timeoutSeconds, TimeUnit.SECONDS)
+                callback.onAddFinished()
                 loadedDrawables.clear()
-                threadPool.shutdown()
-            }
+            }.start()
         }
 
         private fun createBitmapDrawable(icon: Bitmap): BitmapDrawable {
@@ -163,7 +160,7 @@ open class IconPackManager(
                     icon.recycle()
                 }
             }
-            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.DONUT) {
                 BitmapDrawable(bmp)
             } else {
                 BitmapDrawable(res, bmp)
@@ -174,8 +171,11 @@ open class IconPackManager(
             var width = drawable.intrinsicWidth
             var height = drawable.intrinsicHeight
             if (width < 1 || height < 1) {
-                width = 256
-                height = 256
+                height = maxSide
+                width = maxSide
+            } else if (width > maxSide) {
+                height = (height * maxSide.toFloat() / width).toInt()
+                width = maxSide
             }
             return Bitmap.createBitmap(
                 width,
@@ -198,11 +198,7 @@ open class IconPackManager(
         }
 
         private fun getDrawable(id: Int): BitmapDrawable {
-            var bmp = BitmapFactory.decodeResource(res, id)
-            if (bmp == null) {
-                bmp = getBitmap(id)
-            }
-            return createBitmapDrawable(bmp)
+            return createBitmapDrawable(BitmapFactory.decodeResource(res, id) ?: getBitmap(id))
         }
 
         private fun getDrawable(value: String, pkgName: String?): BitmapDrawable? {
@@ -218,11 +214,8 @@ open class IconPackManager(
         }
 
         open fun loadIcon(info: ApplicationInfo): BitmapDrawable? {
-            if (caches.containsKey(info.packageName)) {
-                val id = caches[info.packageName]
-                if (id != null) {
-                    return getDrawable(id)
-                }
+            caches[info.packageName]?.let {
+                return getDrawable(it)
             }
             val activities =
                 pm.getPackageArchiveInfo(info.sourceDir, PackageManager.GET_ACTIVITIES)?.activities
@@ -246,19 +239,20 @@ open class IconPackManager(
         }
 
         open fun loadIcon(launchIntent: Intent): BitmapDrawable? {
-            val comp = launchIntent.component ?: return null
-            return loadIcon(comp) ?: loadIcon(
-                pm.getApplicationInfo(
-                    comp.packageName,
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
-                        PackageManager.MATCH_UNINSTALLED_PACKAGES
-                    } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.BASE_1_1) {
-                        PackageManager.GET_UNINSTALLED_PACKAGES
-                    } else {
-                        0
-                    },
-                ),
-            )
+            return launchIntent.component?.let {
+                loadIcon(it) ?: loadIcon(
+                    pm.getApplicationInfo(
+                        it.packageName,
+                        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
+                            PackageManager.MATCH_UNINSTALLED_PACKAGES
+                        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.BASE_1_1) {
+                            PackageManager.GET_UNINSTALLED_PACKAGES
+                        } else {
+                            0
+                        },
+                    ),
+                )
+            }
         }
 
         open fun loadIcon(comp: ComponentName): BitmapDrawable? {
@@ -315,6 +309,7 @@ open class IconPackManager(
             val canvas = Canvas(icon)
             var side = canvas.width.toFloat()
             drawable.bounds = canvas.clipBounds
+            val saved = canvas.save()
             if (scale != null) {
                 val cwh = side / 2f
                 canvas.scale(scale, scale, cwh, cwh)
@@ -330,9 +325,15 @@ open class IconPackManager(
             if (this.saturation != 1f) {
                 paint.reset()
                 paint.colorFilter = colorFilter
-                Canvas(icon).drawBitmap(icon, 0f, 0f, paint)
+                canvas.restoreToCount(saved)
+                canvas.drawBitmap(icon, 0f, 0f, paint)
             }
             return createBitmapDrawable(icon)
         }
+    }
+
+    interface Callback<T> {
+        fun onAdd(item: T)
+        fun onAddFinished()
     }
 }

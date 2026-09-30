@@ -14,5 +14,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "IconPackManager"
-include(":app")
-include(":library")
+include(":app",":library")

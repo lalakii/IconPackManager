@@ -141,11 +141,11 @@ class MainActivity :
                 val iconPackName = iconPack.name.toString().lowercase()
                 if (customIcon == null) {
                     icon =
-                        if (iconPackName.contains("aura")||iconPackName.contains("color")) { // 这些图标默认是圆角
+                        if (iconPackName.contains("aura") || iconPackName.contains("color")) { // 这些图标默认是圆角
                             iconPack.transformIcon(
                                 icon,
                                 0.3f,
-                               0.99f,
+                                0.99f,
                             )
                         } else {
                             if (iconPackName.contains("delta")) {
@@ -282,6 +282,7 @@ class MainActivity :
         search.clearFocus()
     }
 
+    @Suppress("GestureBackNavigation")
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent?,

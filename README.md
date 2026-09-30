@@ -23,7 +23,7 @@
 
     ```kotlin
     dependencies {
-        implementation("cn.lalaki:IconPackManager:8.5")
+        implementation("cn.lalaki:IconPackManager:8.6")
     }
     ```
 

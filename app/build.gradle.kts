@@ -1,12 +1,10 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("cn.lalaki.repack") version "3.0.0-LTS"
-    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 }
 android {
     namespace = "cn.lalaki.tinydesk"
@@ -20,7 +18,7 @@ android {
             "$versionCode.${
                 ZonedDateTime.now().toLocalDate().format(DateTimeFormatter.ofPattern("MMdd"))
             }"
-        @Suppress("deprecation")
+        @Suppress("Deprecation")
         val config = resourceConfigurations
         config.clear()
         config.add("en")
@@ -53,29 +51,15 @@ android {
         includeInBundle = false
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_22
-        targetCompatibility = JavaVersion.VERSION_22
-    }
-    kotlin {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_22
-        }
+        sourceCompatibility = JavaVersion.VERSION_24
+        targetCompatibility = JavaVersion.VERSION_24
     }
     buildToolsVersion = "37.0.0"
 }
-repackConfig {
-    resign = true // 对重新打包的apk签名
-    addV2Sign = true // v2
-    addV1Sign = true
-    disableV3V4 = true
-    blacklist =
-        arrayOf(
-            "META-INF",
-            "kotlin-tooling-metadata.json",
-            "kotlin",
-            "unused",
-        ) // 重新打包时，可以排除某些无用的文件或文件夹，可以为null
-    quiet = false // 控制台输出日志
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_24
+    }
 }
 dependencies {
     implementation(project(":library"))
